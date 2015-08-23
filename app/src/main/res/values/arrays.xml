@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="Screens">
+        <item>Artists</item>
+        <item>Musics</item>
+        <item>Albums</item>
+        <item>Playlist</item>
+        <item>Favorites</item>
+        <item>Recently Added</item>
+        <item>Others</item>
+    </string-array>
+
+    <string-array name="Test">
+        <item>How</item>
+        <item>You</item>
+        <item>See</item>
+        <item>Things</item>
+        <item>Here</item>
+
+    </string-array>
+</resources>
