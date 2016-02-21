@@ -7,8 +7,13 @@ import okidoki.musicplayer.classes.MusicList;
 import okidoki.musicplayer.classes.MusicPlayer;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,6 +21,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.IBinder;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
@@ -26,6 +32,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -64,6 +71,7 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
     private static ImageButton favoriteImageButton;
     private static ImageButton repeatImageButton;
     private static ImageButton shuffleImageButton;
+
     public static SeekBar progressBar;
     private MusicList musicList;
     private static View view;
@@ -99,8 +107,10 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getActivity().startService(new Intent(getActivity(), MusicPlayer.class));
         //Creating lovely buttons and instances
         musicList = MainActivity.globalMusicList;
+        doBindService();
     }
 
     @Override
@@ -110,7 +120,7 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
         view = inflater.inflate(R.layout.fragment_player, container, false);
 
         lastID = -1;
-        Thread currentThread  = new Thread(this);
+        final Thread currentThread  = new Thread(this);
         currentThread.start();
 
         playImageButton = (ImageButton)view.findViewById(R.id.PlayButton);
@@ -147,7 +157,7 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
             @Override
             public void onClick(View view) {
                 if(musicPlayer.mediaPlayer.isPlaying()) {
-                    musicPlayer.playSong(musicPlayer.currentSong - 1,false, false);
+                    musicPlayer.playSong(musicPlayer.currentSong - 1,false, true);
                     updateSongInfo(musicPlayer.currentSong);
                 }else{
                     updateSongInfo(musicPlayer.currentSong - 1);
@@ -162,7 +172,7 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
             @Override
             public void onClick(View view) {
                 if(musicPlayer.mediaPlayer.isPlaying()) {
-                    musicPlayer.playSong(musicPlayer.currentSong + 1,false, false);
+                    musicPlayer.playSong(musicPlayer.currentSong + 1, false, true);
                     updateSongInfo(musicPlayer.currentSong);
                 }else{
                     updateSongInfo(musicPlayer.currentSong + 1);
@@ -192,6 +202,8 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
                     );
 
                 }
+                if(MusicFragment.musicListAdapter != null)
+                    MusicFragment.musicListAdapter.notifyDataSetChanged();
 
             }
         });
@@ -244,14 +256,14 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
             }
         });
 
-
         progressBar = (SeekBar) view.findViewById(R.id.seekBar);
         progressBar.setOnSeekBarChangeListener(this);
         return view;
     }
 
     public static void updateSongInfo(int id) {
-
+        //if(musicPlayer.musicQueue.getMusicList().size() <= id)
+          //  return;
         // Update for elements of song information fragment
         TextView titleTextView = (TextView) view.findViewById(R.id.titleTextInfo);
         TextView artistTextView = (TextView) view.findViewById(R.id.artistTextInfo);
@@ -334,6 +346,15 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
 
                 favoriteImageButton.setImageResource(R.drawable.ic_notfavorite);
             }
+            TextView albumText = (TextView) view.findViewById(R.id.albumTextView);
+            if(musicPlayer.musicQueue.getMusicFromList(id).getAlbum().getName() != null)
+            {
+                albumText.setText(musicPlayer.musicQueue.getMusicFromList(id).getAlbum().getName());
+            }
+            else
+            {
+                albumText.setText("No Album Data :(");
+            }
         }
     }
 
@@ -411,6 +432,23 @@ public class PlayerFragment extends android.support.v4.app.Fragment implements M
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            musicPlayer = ((MusicPlayer.LocalBinder) service).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName className) {
+            musicPlayer = null;
+        }
+    };
+    private boolean mIsBound;
+    private void doBindService() {
+        getActivity().bindService(new Intent(MainActivity.mainActivity.getApplicationContext(), MusicPlayer.class), mConnection,
+                Context.BIND_AUTO_CREATE);
+        mIsBound = true;
     }
 
     @Override

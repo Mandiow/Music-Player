@@ -18,4 +18,16 @@
         <item>Here</item>
 
     </string-array>
+
+    <string-array name="PlaylistOptions">
+        <item>Rename Playlist</item>
+        <item>Delete Playlist</item>
+    </string-array>
+    <string-array name="MusicOptions">
+        <item>Add to Playlist</item>
+        <item>Edit Information</item>
+        <item>Share</item>
+        <item>Delete</item>
+    </string-array>
+    MusicOptions
 </resources>

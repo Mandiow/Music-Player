@@ -1,8 +1,9 @@
 package okidoki.musicplayer.classes;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class ArtistList {
+public class ArtistList implements Serializable {
     ArrayList<Artist> artistList = new ArrayList<>();
 
     public ArtistList(){

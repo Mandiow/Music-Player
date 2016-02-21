@@ -3,18 +3,19 @@ package okidoki.musicplayer.classes;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by Administrator on 5/30/2015.
  */
-public class Album {
+public class Album implements Serializable {
     private String name;
     private int year;
     private String artist;
-    private Bitmap albumArt;
+    transient private Bitmap albumArt;
     private boolean hasBitmap;
-    private Uri albumArtUri;
+    transient private Uri albumArtUri;
     private long id;
     private MusicList musicList = new MusicList();
 
@@ -48,6 +49,9 @@ public class Album {
         this.name = name;
     }
 
+    public void setBitmap(Bitmap bitmap) {this.albumArt = bitmap;}
+
+    public void setHasBitmap(boolean has) {this.hasBitmap = has;}
 
     public String getArtist() {
         return artist;

@@ -1,7 +1,11 @@
 package okidoki.musicplayer.fragments;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
@@ -12,6 +16,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -47,7 +52,7 @@ public class MusicFragment extends Fragment implements AbsListView.OnItemClickLi
 
     private OnFragmentInteractionListener mListener;
     public static MusicList musicList;
-    private musicListViewAdapter musicListAdapter;
+    public static musicListViewAdapter musicListAdapter;
     private static final String ARG_PARAM1 = "param1";
     private String mParam1;
 
@@ -116,23 +121,122 @@ public class MusicFragment extends Fragment implements AbsListView.OnItemClickLi
 
         listView.setFastScrollEnabled(true);
         listView.setAdapter((ListAdapter) musicListAdapter);
+        listView.setLongClickable(true);
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Select one Option")
+                        .setItems(R.array.MusicOptions, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case 0:
+                                        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.mainActivity);
+                                        String[] arrayOfPlaylists = new String[MainActivity.userPlaylists.size() + 1];
+                                        for(int i = 0; i < MainActivity.userPlaylists.size(); i++)
+                                            arrayOfPlaylists[i] = MainActivity.userPlaylists.get(i).getName();
+                                        final int maxID = MainActivity.userPlaylists.size();
+                                        arrayOfPlaylists[maxID] = "New Playlist";
+                                        alert.setTitle("Add to Playlist")
+                                                .setItems(arrayOfPlaylists, new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        //When one of the possible lists is selected;
+                                                        if (which != maxID) {
+                                                            MainActivity.userPlaylists.get(which).appendMusic(musicList.getMusicFromList(position));
+                                                            // Add to the designed playlist
+                                                        } else {
+                                                            //Show's up the create playlist thing and add the element to this new playlist
+                                                            AlertDialog.Builder alert2 = new AlertDialog.Builder(MainActivity.mainActivity);
+
+                                                            alert2.setTitle("Creating new Playlist");
+                                                            alert2.setMessage("Enter the name of the new playlist:");
+
+                                                            // Set an EditText view to get user input
+                                                            final EditText input = new EditText(MainActivity.mainActivity);
+                                                            alert2.setView(input);
+
+                                                            alert2.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+                                                                public void onClick(DialogInterface dialog, int whichButton) {
+                                                                    String value = input.getText().toString();
+                                                                    long plID = MusicList.createPlaylist(MainActivity.mainActivity.getContentResolver(), value);
+                                                                    //Now add the music to this playlist
+                                                                    for (int i = 0; i < MainActivity.userPlaylists.size(); i++) {
+                                                                        if (MainActivity.userPlaylists.get(i).getID() == plID) {
+                                                                            MainActivity.userPlaylists.get(i).appendMusic(musicList.getMusicFromList(position));
+                                                                            break;
+                                                                        }
+                                                                    }
+
+                                                                }
+                                                            });
+                                                            alert2.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                                public void onClick(DialogInterface dialog, int whichButton) {
+                                                                    // Canceled.
+                                                                }
+                                                            });
+                                                            alert2.show();
+                                                        }
+                                                    }
+                                                });
+                                        alert.show();
+                                        break;
+                                    case 1:
+                                        Toast.makeText(MainActivity.mainActivity, "Edit Info ZZZ", Toast.LENGTH_SHORT).show();
+                                        break;
+                                    case 2:
+                                        Intent intent = new Intent();
+                                        intent.setAction(android.content.Intent.ACTION_SEND);
+                                        File file = new File(musicList.getMusicFromList(position).getFilePath());
+                                        intent.setDataAndType(Uri.fromFile(file), "audio/*");
+                                        startActivity(intent);
+                                        break;
+                                    case 3:
+                                        // Launches thing to delete playlist
+                                        // Use the Builder class for convenient dialog construction
+                                        AlertDialog.Builder alert3 = new AlertDialog.Builder(getActivity());
+                                        alert3.setMessage("Are you sure that you want to delete the music?")
+                                                .setPositiveButton("Delete Music", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        musicList.removeFromPlaylist(MainActivity.mainActivity.getContentResolver(),musicList.getMusicFromList(position));
+                                                        musicList.removeMusic(musicList.getMusicFromList(position));
+                                                        musicListAdapter.notifyDataSetChanged();
+                                                        Toast.makeText(MainActivity.mainActivity,"Music was deleted ):",Toast.LENGTH_SHORT);
+                                                    }
+                                                })
+                                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        // User cancelled the dialog
+                                                    }
+                                                });
+                                        // Create the AlertDialog object and return it
+                                        alert3.show();
+                                        break;
+                                }
+                            }
+                        });
+                builder.show();
+                return true;
+            }
+        });
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position,
                                     long id) {
                 musicList = null;
-                if(mParam1 == "GLOBAL" )
+                if (mParam1 == "GLOBAL")
                     musicList = MainActivity.globalMusicList;
-                if(mParam1 == "ALBUM" ){
+                if (mParam1 == "ALBUM") {
                     musicList = MainActivity.localalbum.getMusicList();
                     musicList.setName(MainActivity.localalbum.getArtist());
                 }
-                if(mParam1 == "LIST" ) {
+                if (mParam1 == "LIST") {
                     musicList = MainActivity.playmusiclist;
                     //Toast.makeText(MainActivity.mainActivity,MainActivity.playmusiclist.getMusicFromList(2).getTitle(),Toast.LENGTH_SHORT).show();
                 }
 
-                PlayerFragment.musicPlayer.playSong(position,true,true);
+                PlayerFragment.musicPlayer.playSong(position, true, false);
                 PlayerFragment.playImageButton.setImageResource(R.drawable.ic_pause);
                 miniPlayerFragment.updatePlayImage();
             }

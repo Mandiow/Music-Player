@@ -52,6 +52,18 @@
             android:layout_alignParentEnd="true"
             android:alpha="0.8" />
 
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Dummy Album"
+            android:id="@+id/albumTextView"
+            android:gravity="center_horizontal"
+            android:layout_below="@+id/AlbumButton"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="25dp" />
+
         <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -114,7 +126,7 @@
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_random"
+            android:src="@drawable/ic_linear"
             android:background="#00000000"
             android:id="@+id/shuffleButton"
             android:scaleX="0.7"

@@ -66,7 +66,6 @@ public class MusicList extends Object implements Serializable, Cloneable{
                         curArtist = new Artist(cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.ARTIST)), new AlbumList(), new MusicList());
                         MainActivity.globalArtistList.appendArtist(curArtist);
                     }
-                    Log.w("Artist", cur.getString(cur.getColumnIndex(MediaStore.Audio.Media.ARTIST)));
 
                     //If it already exists, we need to add the reference to the album in the artist, which will be done latter on since we don't have the artist right now
 
@@ -117,6 +116,7 @@ public class MusicList extends Object implements Serializable, Cloneable{
 
                     //Add the music with it's album and artist (Artist and Album might be non-existent)
                     //but that isn't going to be a problem
+
                     Music musicElem =
                             new Music(
                                     cur.getString(cur.getColumnIndex(MediaStore.Audio.Media._ID)),
@@ -173,7 +173,6 @@ public class MusicList extends Object implements Serializable, Cloneable{
         {
             if(MainActivity.userPlaylists.get(i).getName().equals("Favorites"))
             {
-                Log.w("asd",String.valueOf(MainActivity.userPlaylists.get(i).getID()));
                 found = true;
                 break;
             }
@@ -214,7 +213,6 @@ public class MusicList extends Object implements Serializable, Cloneable{
                     if(mCursor.getLong(mCursor.getColumnIndex(MediaStore.Audio.Playlists.Members.AUDIO_ID)) == Long.valueOf(MainActivity.globalMusicList.getMusicFromList(i).getId()))
                     {
                         this.musicsList.add(MainActivity.globalMusicList.getMusicFromList(i));
-                        Log.w("Add",MainActivity.globalMusicList.getMusicFromList(i).getTitle());
                     }
                 }
             }
@@ -252,6 +250,7 @@ public class MusicList extends Object implements Serializable, Cloneable{
             ContentValues values = new ContentValues(1);
             values.put(MediaStore.Audio.Playlists.NAME, name);
             Uri uri = resolver.insert(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI, values);
+            MainActivity.userPlaylists.add(new MusicList(name,Long.parseLong(uri.getLastPathSegment())));
 			/* Creating the playlist may fail due to race conditions or silly
 			 * android bugs (i am looking at you, kitkat!). In this case, id will stay -1
 			 */
@@ -263,6 +262,7 @@ public class MusicList extends Object implements Serializable, Cloneable{
             Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external", id);
             resolver.delete(uri, null, null);
         }
+
 
         return id;
     }
@@ -284,8 +284,6 @@ public class MusicList extends Object implements Serializable, Cloneable{
         ContentValues value = new ContentValues(2);
         value.put(MediaStore.Audio.Playlists.Members.PLAY_ORDER, Integer.valueOf(base));
         value.put(MediaStore.Audio.Playlists.Members.AUDIO_ID, Long.valueOf(music.getId()));
-        Log.w("Playlist", String.valueOf(playlistId));
-        Log.w("Music",music.getId());
         resolver.insert(uri, value);
         return 0;
     }
@@ -304,7 +302,7 @@ public class MusicList extends Object implements Serializable, Cloneable{
      * @param resolver A ContentResolver to use.
      * @param id The Media.Audio.Playlists id of the playlist.
      */
-    public void deletePlaylist(ContentResolver resolver, long id)
+    public static void deletePlaylist(ContentResolver resolver, long id)
     {
         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI, id);
         resolver.delete(uri, null, null);
@@ -317,7 +315,7 @@ public class MusicList extends Object implements Serializable, Cloneable{
      * @param id The Media.Audio.Playlists id of the playlist.
      * @param newName The new name for the playlist.
      */
-    public void renamePlaylist(ContentResolver resolver, long id, String newName)
+    public static void renamePlaylist(ContentResolver resolver, long id, String newName)
     {
         long existingId = getPlaylist(resolver, newName);
         // We are already called the requested name; nothing to do.
@@ -336,6 +334,7 @@ public class MusicList extends Object implements Serializable, Cloneable{
         String[] cols = new String[] {
                 "count(*)"
         };
+        Log.w("ID",String.valueOf(this.id));
         Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external", this.id);
         Cursor cur = resolver.query(uri, cols, null, null, null);
         cur.moveToFirst();
@@ -376,7 +375,6 @@ public class MusicList extends Object implements Serializable, Cloneable{
             return (name.endsWith(".mp3") || name.endsWith(".MP3"));
         }
     }
-
 
     public int musicListSize () { return this.musicsList.size(); }
     public void appendMusic(Music music){

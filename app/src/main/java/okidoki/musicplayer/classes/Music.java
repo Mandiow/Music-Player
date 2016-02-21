@@ -1,8 +1,12 @@
 package okidoki.musicplayer.classes;
 
-import java.io.File;
+import android.net.Uri;
 
-public class Music {
+import java.io.File;
+import java.io.Serializable;
+import java.net.URI;
+
+public class Music implements Serializable {
     //Every media file MUST have this fields
     private String id;
     private String filePath;

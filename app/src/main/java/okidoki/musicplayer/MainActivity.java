@@ -27,6 +27,7 @@ import okidoki.musicplayer.classes.AlbumList;
 import okidoki.musicplayer.classes.Artist;
 import okidoki.musicplayer.classes.ArtistList;
 import okidoki.musicplayer.classes.MusicList;
+import okidoki.musicplayer.external.FakeCache;
 import okidoki.musicplayer.fragments.ArtistFragment;
 import okidoki.musicplayer.fragments.FavoritesFragment;
 import okidoki.musicplayer.fragments.MusicFragment;
@@ -69,6 +70,7 @@ public class MainActivity extends ActionBarActivity
     public static final int SCREEN_FAVORITES = 5;
     public static final int SCREEN_RECENTLYADDED = 6;
     public static final int SCREEN_OTHERS = 7;
+    private FakeCache fakeCache = new FakeCache();
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -83,11 +85,6 @@ public class MainActivity extends ActionBarActivity
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         setContentView(R.layout.activity_main);
         getWindow().setFormat(PixelFormat.RGBA_8888);
-        if(globalMusicList.musicListSize() == 0) {
-            globalMusicList.searchForMusics();
-            MusicList.queryPlaylists(getContentResolver());
-            Log.w("Playlist size",String.valueOf(playLists.size()));
-        }
         for (int i = 0; i < userPlaylists.size(); i++)
             userPlaylists.get(i).reloadMusicListfromPlayList();
         mNavigationDrawerFragment = (NavigationDrawerFragment) getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -151,8 +148,22 @@ public class MainActivity extends ActionBarActivity
 
             }
         });
+        if((fakeCache.readMusic(getApplicationContext())) == null) {
+            globalMusicList.searchForMusics();
+            MusicList.queryPlaylists(getContentResolver());
+            fakeCache.writeAlbum(getApplicationContext(), globalAlbumList);
+            fakeCache.writeArtist(getApplicationContext(), globalArtistList);
+            fakeCache.writeMusic(getApplicationContext(), globalMusicList);
+        }else {
+            globalAlbumList = fakeCache.readAlbum(getApplicationContext());
+            globalAlbumList.FillBitmaps(globalAlbumList);
+            globalArtistList = fakeCache.readArtist(getApplicationContext());
+            globalMusicList = fakeCache.readMusic(getApplicationContext());
+            MusicList.queryPlaylists(getContentResolver());
 
-        PlayerFragment.updateSongInfo(PlayerFragment.musicPlayer.currentSong);
+            Log.e("ERA", String.valueOf(globalAlbumList));
+        }
+        //PlayerFragment.updateSongInfo(PlayerFragment.musicPlayer.currentSong);
 
     }
 

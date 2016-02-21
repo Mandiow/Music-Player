@@ -1,9 +1,11 @@
 package okidoki.musicplayer.classes;
 
+import java.io.Serializable;
+
 /**
  * Created by Administrator on 5/30/2015.
  */
-public class Artist implements Comparable<Artist> {
+public class Artist implements Comparable<Artist>,Serializable {
     private String name;
     private AlbumList albumList;
     private MusicList musicList;

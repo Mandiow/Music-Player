@@ -1,7 +1,9 @@
 package okidoki.musicplayer.fragments;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
@@ -11,6 +13,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -27,6 +30,9 @@ import okidoki.musicplayer.MainActivity;
 import okidoki.musicplayer.R;
 import okidoki.musicplayer.classes.MusicList;
 import okidoki.musicplayer.fragments.dummy.DummyContent;
+
+import static android.widget.AdapterView.*;
+
 /**
  * A fragment representing a list of Items.
  * <p/>
@@ -100,8 +106,72 @@ public class PlaylistsFragment extends Fragment implements AbsListView.OnItemCli
         ListView listView = (ListView) view.findViewById(R.id.frag_playlist_list_list);
         listView.setFastScrollEnabled(true);
         listView.setAdapter((ListAdapter) playlistViewAdapter);
+        listView.setLongClickable(true);
+        listView.setOnItemLongClickListener(new OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle(MainActivity.userPlaylists.get(position).getName()+" Playlist Options")
+                        .setItems(R.array.PlaylistOptions, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch (which) {
+                                    case 0:
+                                        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.mainActivity);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                        alert.setTitle("Editing Playlist Name");
+                                        alert.setMessage("Enter the new name for the playlist:");
+
+                                        // Set an EditText view to get user input
+                                        final EditText input = new EditText(MainActivity.mainActivity);
+                                        alert.setView(input);
+
+                                        alert.setPositiveButton("Edit", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int whichButton) {
+                                                String value = input.getText().toString();
+                                                MusicList.renamePlaylist(MainActivity.mainActivity.getContentResolver(), MainActivity.userPlaylists.get(position).getID(), value);
+                                                MainActivity.userPlaylists.get(position).setName(value);
+                                                playlistViewAdapter.notifyDataSetChanged();
+                                            }
+                                        });
+
+                                        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int whichButton) {
+                                                // Canceled.
+                                            }
+                                        });
+
+                                        alert.show();
+                                        break;
+                                    case 1:
+                                        // Launches thing to delete playlist
+                                        // Use the Builder class for convenient dialog construction
+                                        AlertDialog.Builder builder2 = new AlertDialog.Builder(getActivity());
+                                        builder2.setMessage("Are you sure that you want to delete the playlist?")
+                                                .setPositiveButton("Delete Playlist", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        MusicList.deletePlaylist(MainActivity.mainActivity.getContentResolver(), MainActivity.userPlaylists.get(position).getID());
+                                                        MainActivity.userPlaylists.remove(position);
+                                                        playlistViewAdapter.notifyDataSetChanged();
+                                                        Toast.makeText(MainActivity.mainActivity,"Playlist was deleted ):",Toast.LENGTH_SHORT);
+
+                                                    }
+                                                })
+                                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                                    public void onClick(DialogInterface dialog, int id) {
+                                                        // User cancelled the dialog
+                                                    }
+                                                });
+                                        // Create the AlertDialog object and return it
+                                        builder2.show();
+                                        break;
+                                }
+                            }
+                        });
+                builder.show();
+                return true;
+            }
+        });
+        listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position,
                                     long id) {
@@ -110,11 +180,35 @@ public class PlaylistsFragment extends Fragment implements AbsListView.OnItemCli
             }
         });
         AddplayListButton = (LinearLayout) view.findViewById(R.id.plus_btn);
+
         AddplayListButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                Toast.makeText(MainActivity.mainActivity, "I'm FABULOUS", Toast.LENGTH_SHORT).show();
+                AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.mainActivity);
+
+                alert.setTitle("Creating new Playlist");
+                alert.setMessage("Enter the name of the new playlist:");
+
+                // Set an EditText view to get user input
+                final EditText input = new EditText(MainActivity.mainActivity);
+                alert.setView(input);
+
+                alert.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        String value = input.getText().toString();
+                        MusicList.createPlaylist(MainActivity.mainActivity.getContentResolver(), value);
+                        playlistViewAdapter.notifyDataSetChanged();
+                    }
+                });
+
+                alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        // Canceled.
+                    }
+                });
+
+                alert.show();
 
 
             }

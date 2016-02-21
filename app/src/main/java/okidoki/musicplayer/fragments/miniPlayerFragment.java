@@ -90,7 +90,7 @@ public class miniPlayerFragment extends Fragment {
             public void onClick(View view) {
                 Log.w("oi", "oi");
                 if(PlayerFragment.musicPlayer.mediaPlayer.isPlaying()) {
-                    PlayerFragment.musicPlayer.playSong(PlayerFragment.musicPlayer.currentSong - 1,false,false);
+                    PlayerFragment.musicPlayer.playSong(PlayerFragment.musicPlayer.currentSong - 1,false,true);
                     PlayerFragment.updateSongInfo(PlayerFragment.musicPlayer.currentSong);
                 }else{
                     PlayerFragment.updateSongInfo(PlayerFragment.musicPlayer.currentSong - 1);
@@ -106,7 +106,7 @@ public class miniPlayerFragment extends Fragment {
             public void onClick(View view) {
                 Log.w("oi", "oi");
                 if (PlayerFragment.musicPlayer.mediaPlayer.isPlaying()) {
-                    PlayerFragment.musicPlayer.playSong(PlayerFragment.musicPlayer.currentSong + 1,false,false);
+                    PlayerFragment.musicPlayer.playSong(PlayerFragment.musicPlayer.currentSong + 1,false,true);
                     PlayerFragment.updateSongInfo(PlayerFragment.musicPlayer.currentSong);
                 } else {
                     PlayerFragment.updateSongInfo(PlayerFragment.musicPlayer.currentSong + 1);

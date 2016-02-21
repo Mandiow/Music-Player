@@ -1,12 +1,20 @@
 package okidoki.musicplayer.classes;
 
 import android.app.FragmentManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
+import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
@@ -22,12 +30,16 @@ import android.widget.Toast;
 
 import okidoki.musicplayer.MainActivity;
 import okidoki.musicplayer.R;
+import okidoki.musicplayer.external.BroadCastReciever;
 import okidoki.musicplayer.fragments.MusicFragment;
 import okidoki.musicplayer.fragments.PlayerFragment;
 
 
 public class MusicPlayer extends Service{
-    public MediaPlayer mediaPlayer;
+
+
+    public MediaPlayer mediaPlayer = new MediaPlayer();
+    private AudioManager audioManager;
     public MusicList musicQueue;
     public int currentSong = 0;
     public boolean[] alreadyPlayedMusics;
@@ -55,14 +67,76 @@ public class MusicPlayer extends Service{
     public RepeatStates repeatState;
     public Boolean isShuffle = false;
 
-
-    public MusicPlayer() {
-        super();
+    private NotificationManager mNotificationManager;
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         repeatState = RepeatStates.RepeatAll;
         musicQueue = MainActivity.globalMusicList;
         alreadyPlayedMusics = new boolean[musicQueue.getMusicList().size()];
-        mediaPlayer = new MediaPlayer();
+
+
     }
+    NotificationCompat.Builder bBuilder;
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        super.onStartCommand(intent, flags, startId);
+
+// here to show that your service is running foreground
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        Intent bIntent = new Intent(this, MainActivity.class);
+
+        //Creation of the notifications Intents
+        PendingIntent pbIntent = PendingIntent.getActivity(this, 0, bIntent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent rewindIntent = BroadCastReciever.buildReceiverPendingIntent(
+                this,
+                BroadCastReciever.ACTION_TYPE.REWIND
+        );
+        PendingIntent pauseIntent = BroadCastReciever.buildReceiverPendingIntent(
+                this,
+                BroadCastReciever.ACTION_TYPE.PAUSE_RESUME
+        );
+        PendingIntent forwardIntent = BroadCastReciever.buildReceiverPendingIntent(
+                this,
+                BroadCastReciever.ACTION_TYPE.FORWARD
+        );
+        bBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.icon512)
+                        .setContentTitle("OkDok Player")
+                        .setContentText(songTitle)
+                        .setAutoCancel(true)
+                        .setOngoing(true)
+                        .setContentIntent(pbIntent)
+                        .addAction(R.drawable.ic_rewind, " ", rewindIntent)
+                        .addAction(R.drawable.ic_pause," ",pauseIntent)
+                        .addAction(R.drawable.ic_forward, " ", forwardIntent)
+        ;
+        if (MusicFragment.musicList != null){
+            bBuilder.setLargeIcon(MusicFragment.musicList.getMusicFromList(currentSong).getAlbum().getBitmap());
+        }
+
+        this.startForeground(1,  bBuilder.build());
+        //Toast.makeText(MainActivity.mainActivity.getApplicationContext(), "this is my Toast message!!! =)",
+        //      Toast.LENGTH_LONG).show();
+
+// here the body of your service where you can arrange your reminders and send alerts
+        return START_STICKY;
+
+        /*NotificationCompat.Builder bBuilder =
+                new NotificationCompat.Builder(MainActivity.mainActivity.getApplicationContext())
+                        .setSmallIcon(R.drawable.ic_music)
+                        .setContentTitle("OkDok Player")
+                        .setContentText(songTitle)
+                        .setAutoCancel(true)
+                        .setOngoing(true)
+                        .setContentIntent(pi);
+        startForeground(1, bBuilder.build());*/
+
+    }
+
 
     public void  playSong(int songIndex, boolean user,boolean calledbyOnCompletion){
         if(MusicFragment.musicList != null && user){
@@ -145,10 +219,20 @@ public class MusicPlayer extends Service{
             // Displaying Song title
             songTitle = musicQueue.getMusicFromList(songIndex).getTitle();
             PlayerFragment.updateSongInfo(songIndex);
+            Intent intent =  new Intent(MainActivity.mainActivity.getApplicationContext(), MainActivity.class);
+            if (intent != null) {
+                PendingIntent pi = PendingIntent.getActivity(MainActivity.mainActivity.getApplicationContext(), 0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
 
-
+            }
             // Changing Button Image to pause image
             currentSong = songIndex;
+            String Artist = MusicFragment.musicList.getMusicFromList(currentSong).getAlbum().getArtist();
+            bBuilder.setContentText(songTitle).setLargeIcon(MainActivity.globalAlbumList.getAlbumNameFromArtist(Artist).getBitmap());
+
+            mNotificationManager.notify(1, bBuilder.build());
+
 
             // set Progress bar values
             //songProgressBar.setProgress(0);
@@ -165,14 +249,39 @@ public class MusicPlayer extends Service{
         }
     }
 
+    private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+    public class NoisyAudioStreamReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.w("AQUI:", "ERA PRA TER IDO");
+            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                if (mediaPlayer.isPlaying()) {
+
+                    mediaPlayer().pause();
+                }
+            }
+        }}
+
     public void UpdateCurrentSong(int update)
     {
         currentSong = update;
     }
-
+    public class LocalBinder extends Binder {
+        public MusicPlayer getService() {
+            return MusicPlayer.this;
+        }
+    }
+    private final IBinder mBinder = new LocalBinder();
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
+    }
+
+
+    @Override
+    public void onDestroy() {
+        stopForeground(true);
+        super.onDestroy();
     }
 
     public MediaPlayer mediaPlayer() {
