@@ -52,14 +52,12 @@ public class SelectedArtistFragment extends Fragment {
      */
     // TODO: Rename and change types and number of parameters
     public static SelectedArtistFragment newInstance() {
-
         Bundle args = new Bundle();
         SelectedArtistFragment fragment = new SelectedArtistFragment();
         fragment.setArguments(args);
         return fragment;
     }
     public static SelectedArtistFragment newInstance(int sectionNumber) {
-        Log.e("ESSE",String.valueOf(sectionNumber));
         SelectedArtistFragment fragment = new SelectedArtistFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
@@ -122,8 +120,7 @@ public class SelectedArtistFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        ((MainActivity) getActivity()).onSectionAttached(
-                getArguments().getInt(ARG_SECTION_NUMBER));
+        ((MainActivity) getActivity()).onSectionAttached(1); // original: getArguments().getInt(ARG_SECTION_NUMBER)
         try {
             mListener = (OnSelectedFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
@@ -198,7 +195,7 @@ class SelectedArtistListViewAdapter extends BaseAdapter {
         ImageView imageView = (ImageView) row.findViewById(R.id.albumArtAlbumList);
         artistTextView.setText(adapterSelectedArtistList.getAlbumFromList(position).getArtist());
         AlbumTitleAlbumList.setText(adapterSelectedArtistList.getAlbumFromList(position).getName());
-        imageView.setImageBitmap(adapterSelectedArtistList.getAlbumFromList(position).getBitmap());
+        imageView.setImageBitmap(MainActivity.globalAlbumList.searchAlbum(adapterSelectedArtistList.getAlbumFromList(position).getName()).getBitmap());
 
         return row;
     }
