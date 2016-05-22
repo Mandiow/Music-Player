@@ -84,7 +84,7 @@ public class MusicPlayer extends Service{
 
         super.onStartCommand(intent, flags, startId);
 
-// here to show that your service is running foreground
+        // here to show that your service is running foreground
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Intent bIntent = new Intent(this, MainActivity.class);
 
